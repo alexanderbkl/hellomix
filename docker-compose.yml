@@ -1,0 +1,85 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:15-alpine
+    container_name: hellomix-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: hellomix
+      POSTGRES_USER: hellomix
+      POSTGRES_PASSWORD: hellomix_password
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - hellomix-network
+
+  # Redis Cache
+  redis:
+    image: redis:7-alpine
+    container_name: hellomix-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - hellomix-network
+
+  # HelloMix Backend
+  backend:
+    build:
+      context: ./backend
+      dockerfile: docker/Dockerfile
+    container_name: hellomix-backend
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    environment:
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_USER: hellomix
+      DB_PASSWORD: hellomix_password
+      DB_NAME: hellomix
+      DB_SSLMODE: disable
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      REDIS_PASSWORD: ""
+      REDIS_DB: 0
+      PORT: 8080
+      GIN_MODE: release
+      SERVER_TIMEOUT: 30
+      RATE_LIMIT: 100
+      COINGECKO_API_KEY: ${COINGECKO_API_KEY:-}
+    depends_on:
+      - postgres
+      - redis
+    networks:
+      - hellomix-network
+
+  # HelloMix Frontend (Next.js)
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: hellomix-frontend
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      NEXT_PUBLIC_API_URL: http://localhost:8080
+    depends_on:
+      - backend
+    networks:
+      - hellomix-network
+
+volumes:
+  postgres_data:
+  redis_data:
+
+networks:
+  hellomix-network:
+    driver: bridge

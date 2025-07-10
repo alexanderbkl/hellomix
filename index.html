@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HelloMix- Anonymous Crypto Exchange</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header class="header">
+            <div class="logo">
+                <i class="fas fa-shield-alt"></i>
+                <span>HelloMix</span>
+            </div>
+            <nav class="nav">
+                <a href="#how-it-works">How it Works</a>
+                <a href="#fees">Fees</a>
+                <a href="#support">Support</a>
+            </nav>
+        </header>
+
+        <!-- Hero Section -->
+        <section class="hero">
+            <div class="hero-content">
+                <h1 class="hero-title">
+                    Anonymous Crypto Exchange
+                    <span class="gradient-text">Made Simple</span>
+                </h1>
+                <p class="hero-subtitle">
+                    Send Bitcoin, receive any cryptocurrency anonymously across multiple wallets. 
+                    No registration, no KYC, no traces.
+                </p>
+                <div class="hero-stats">
+                    <div class="stat">
+                        <div class="stat-number">$2.5M+</div>
+                        <div class="stat-label">Mixed</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-number">1,247</div>
+                        <div class="stat-label">Transactions</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-number">99.9%</div>
+                        <div class="stat-label">Uptime</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Main Form -->
+        <section class="mixer-form">
+            <div class="form-container">
+                <div class="form-header">
+                    <h2>Start Your Anonymous Exchange</h2>
+                    <p>Send Bitcoin and receive any cryptocurrency at up to 7 different addresses</p>
+                </div>
+
+                <form id="mixerForm" class="form">
+                    <!-- Step 1: Amount -->
+                    <div class="form-step active" data-step="1">
+                        <div class="step-header">
+                            <div class="step-number">1</div>
+                            <h3>Amount to Send</h3>
+                        </div>
+                        <div class="input-group">
+                            <label>Bitcoin Amount</label>
+                            <div class="amount-input">
+                                <input type="number" id="btcAmount" placeholder="0.01" min="0.001" step="0.001">
+                                <span class="currency">BTC</span>
+                            </div>
+                            <div class="amount-usd" id="amountUSD">≈ $0 USD</div>
+                        </div>
+                        <button type="button" class="btn-next" onclick="nextStep()">Continue</button>
+                    </div>
+
+                    <!-- Step 2: Output Currency -->
+                    <div class="form-step" data-step="2">
+                        <div class="step-header">
+                            <div class="step-number">2</div>
+                            <h3>Choose Output Currency</h3>
+                        </div>
+                        <div class="currency-grid">
+                            <div class="currency-option" data-currency="ETH">
+                                <i class="fab fa-ethereum"></i>
+                                <span>Ethereum</span>
+                                <small>ETH</small>
+                            </div>
+                            <div class="currency-option" data-currency="USDT">
+                                <i class="fas fa-dollar-sign"></i>
+                                <span>Tether</span>
+                                <small>USDT</small>
+                            </div>
+                            <div class="currency-option" data-currency="USDC">
+                                <i class="fas fa-coins"></i>
+                                <span>USD Coin</span>
+                                <small>USDC</small>
+                            </div>
+                            <div class="currency-option" data-currency="ADA">
+                                <i class="fas fa-heart"></i>
+                                <span>Cardano</span>
+                                <small>ADA</small>
+                            </div>
+                            <div class="currency-option" data-currency="SOL">
+                                <i class="fas fa-sun"></i>
+                                <span>Solana</span>
+                                <small>SOL</small>
+                            </div>
+                            <div class="currency-option" data-currency="MATIC">
+                                <i class="fas fa-layer-group"></i>
+                                <span>Polygon</span>
+                                <small>MATIC</small>
+                            </div>
+                        </div>
+                        <div class="step-buttons">
+                            <button type="button" class="btn-back" onclick="prevStep()">Back</button>
+                            <button type="button" class="btn-next" onclick="nextStep()" disabled>Continue</button>
+                        </div>
+                    </div>
+
+                    <!-- Step 3: Receiver Addresses -->
+                    <div class="form-step" data-step="3">
+                        <div class="step-header">
+                            <div class="step-number">3</div>
+                            <h3>Receiver Addresses</h3>
+                            <p>Add 1-7 addresses to receive your <span id="selectedCurrency">cryptocurrency</span></p>
+                        </div>
+                        <div class="addresses-container">
+                            <div class="address-input-group">
+                                <label>Address 1</label>
+                                <div class="address-input">
+                                    <input type="text" placeholder="Enter wallet address" required>
+                                    <input type="number" placeholder="%" min="1" max="100" value="100" class="percentage">
+                                </div>
+                            </div>
+                        </div>
+                        <button type="button" class="btn-add-address" onclick="addAddress()">
+                            <i class="fas fa-plus"></i> Add Another Address
+                        </button>
+                        <div class="step-buttons">
+                            <button type="button" class="btn-back" onclick="prevStep()">Back</button>
+                            <button type="button" class="btn-next" onclick="nextStep()">Continue</button>
+                        </div>
+                    </div>
+
+                    <!-- Step 4: Confirmation -->
+                    <div class="form-step" data-step="4">
+                        <div class="step-header">
+                            <div class="step-number">4</div>
+                            <h3>Confirm & Send</h3>
+                        </div>
+                        
+                        <div class="order-summary">
+                            <h4>Order Summary</h4>
+                            <div class="summary-item">
+                                <span>You Send:</span>
+                                <span id="summaryBTC">0.01 BTC</span>
+                            </div>
+                            <div class="summary-item">
+                                <span>You Receive:</span>
+                                <span id="summaryReceive">~0.5 ETH</span>
+                            </div>
+                            <div class="summary-item">
+                                <span>Service Fee (1%):</span>
+                                <span id="summaryFee">~$10</span>
+                            </div>
+                            <div class="summary-item">
+                                <span>Network Fees:</span>
+                                <span>Covered by you</span>
+                            </div>
+                        </div>
+
+                        <div class="payment-info">
+                            <div class="payment-address">
+                                <label>Send Bitcoin to this address:</label>
+                                <div class="address-display">
+                                    <span id="paymentAddress">bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh</span>
+                                    <button type="button" onclick="copyAddress()" class="copy-btn">
+                                        <i class="fas fa-copy"></i>
+                                    </button>
+                                </div>
+                                <div class="qr-code">
+                                    <div id="qrcode"></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="step-buttons">
+                            <button type="button" class="btn-back" onclick="prevStep()">Back</button>
+                            <button type="button" class="btn-submit" onclick="startMixing()">I've Sent the Bitcoin</button>
+                        </div>
+                    </div>
+
+                    <!-- Step 5: Processing -->
+                    <div class="form-step" data-step="5">
+                        <div class="processing-status">
+                            <div class="processing-icon">
+                                <i class="fas fa-cog fa-spin"></i>
+                            </div>
+                            <h3>Processing Your Transaction</h3>
+                            <p>Your Bitcoin has been received and is being processed. You'll receive your cryptocurrency within 10-30 minutes.</p>
+                            
+                            <div class="progress-steps">
+                                <div class="progress-step completed">
+                                    <i class="fas fa-check"></i>
+                                    <span>Bitcoin Received</span>
+                                </div>
+                                <div class="progress-step active">
+                                    <i class="fas fa-exchange-alt"></i>
+                                    <span>Converting Currency</span>
+                                </div>
+                                <div class="progress-step">
+                                    <i class="fas fa-paper-plane"></i>
+                                    <span>Sending to Addresses</span>
+                                </div>
+                            </div>
+
+                            <div class="transaction-id">
+                                <strong>Transaction ID:</strong>
+                                <span id="txId">CMX-7f8a9b2c1d3e4f5g6h</span>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </section>
+
+        <!-- Features Section -->
+        <section class="features" id="how-it-works">
+            <h2>Why Choose HelloMix?</h2>
+            <div class="features-grid">
+                <div class="feature">
+                    <div class="feature-icon">
+                        <i class="fas fa-user-secret"></i>
+                    </div>
+                    <h3>Complete Anonymity</h3>
+                    <p>No registration required. No personal information stored. Complete privacy guaranteed.</p>
+                </div>
+                <div class="feature">
+                    <div class="feature-icon">
+                        <i class="fas fa-bolt"></i>
+                    </div>
+                    <h3>Lightning Fast</h3>
+                    <p>Transactions processed within 10-30 minutes. Quick and efficient mixing service.</p>
+                </div>
+                <div class="feature">
+                    <div class="feature-icon">
+                        <i class="fas fa-shield-alt"></i>
+                    </div>
+                    <h3>Secure & Reliable</h3>
+                    <p>Bank-grade security with 99.9% uptime. Your funds are always safe with us.</p>
+                </div>
+                <div class="feature">
+                    <div class="feature-icon">
+                        <i class="fas fa-sitemap"></i>
+                    </div>
+                    <h3>Multiple Outputs</h3>
+                    <p>Split your funds across up to 7 different wallet addresses for maximum privacy.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Fees Section -->
+        <section class="fees-section" id="fees">
+            <h2>Transparent Pricing</h2>
+            <div class="fees-info">
+                <div class="fee-card">
+                    <h3>Service Fee</h3>
+                    <div class="fee-amount">1%</div>
+                    <p>Low, flat rate on all transactions</p>
+                </div>
+                <div class="fee-card">
+                    <h3>Network Fees</h3>
+                    <div class="fee-amount">Variable</div>
+                    <p>On-chain transaction fees covered by client</p>
+                </div>
+            </div>
+            <p class="fees-note">
+                <i class="fas fa-info-circle"></i>
+                All on-chain transaction fees are covered by the client. Our 1% service fee is automatically deducted from your transaction amount.
+            </p>
+        </section>
+
+        <!-- Footer -->
+        <footer class="footer">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <div class="logo">
+                        <i class="fas fa-shield-alt"></i>
+                        <span>HelloMix</span>
+                    </div>
+                    <p>Anonymous cryptocurrency exchange service</p>
+                </div>
+                <div class="footer-section">
+                    <h4>Service</h4>
+                    <a href="#how-it-works">How it Works</a>
+                    <a href="#fees">Fees</a>
+                    <a href="#support">Support</a>
+                </div>
+                <div class="footer-section">
+                    <h4>Support</h4>
+                    <a href="#faq">FAQ</a>
+                    <a href="#contact">Contact</a>
+                    <a href="#terms">Terms of Service</a>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2025 HelloMix. All rights reserved.</p>
+            </div>
+        </footer>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode/1.5.3/qrcode.min.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>
