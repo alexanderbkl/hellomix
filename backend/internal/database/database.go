@@ -49,6 +49,8 @@ func (d *Database) Migrate() error {
 	
 	return d.DB.AutoMigrate(
 		&models.Transaction{},
+		&models.Payment{},
+		&models.Wallet{},
 		&models.PriceCache{},
 		&models.SupportedCurrency{},
 	)

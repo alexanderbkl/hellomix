@@ -96,3 +96,30 @@ func (th *TransactionHandler) GetTransactionStatus(c *gin.Context) {
 		},
 	})
 }
+
+// GetPaymentStatus handles GET /api/v1/exchange/payment/:id
+func (th *TransactionHandler) GetPaymentStatus(c *gin.Context) {
+	idParam := c.Param("id")
+	transactionID, err := uuid.Parse(idParam)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "Invalid transaction ID",
+		})
+		return
+	}
+
+	paymentStatus, err := th.transactionService.GetPaymentStatus(c.Request.Context(), transactionID)
+	if err != nil {
+		logrus.Errorf("Failed to get payment status: %v", err)
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": "Failed to get payment status",
+			"details": err.Error(),
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"success": true,
+		"data":    paymentStatus,
+	})
+}

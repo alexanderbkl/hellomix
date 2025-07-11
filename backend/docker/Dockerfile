@@ -1,6 +1,6 @@
 # HelloMix Backend
 
-FROM golang:1.21-alpine AS builder
+FROM golang:1.23-alpine AS base
 
 # Install git and ca-certificates
 RUN apk add --no-cache git ca-certificates
@@ -14,14 +14,33 @@ COPY go.mod go.sum ./
 # Download dependencies
 RUN go mod download
 
+# Development stage with Air for hot reload
+FROM base AS development
+
+# Install Air for hot reload and Delve for debugging
+RUN go install github.com/air-verse/air@v1.52.3
+RUN go install github.com/go-delve/delve/cmd/dlv@latest
+
+# Copy source code
+COPY . .
+
+# Expose ports for app and debugger
+EXPOSE 8080 2345
+
+# Use Air for hot reload in development
+CMD ["air", "-c", ".air.toml"]
+
+# Production builder stage
+FROM base AS builder
+
 # Copy source code
 COPY . .
 
 # Build the application
 RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o main ./cmd/server
 
-# Final stage
-FROM alpine:latest
+# Final production stage
+FROM alpine:latest AS production
 
 # Install ca-certificates for HTTPS requests
 RUN apk --no-cache add ca-certificates
@@ -30,9 +49,6 @@ WORKDIR /root/
 
 # Copy the binary from builder
 COPY --from=builder /app/main .
-
-# Copy static files if they exist
-COPY --from=builder /app/static ./static 2>/dev/null || true
 
 # Expose port
 EXPOSE 8080

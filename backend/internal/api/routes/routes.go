@@ -4,9 +4,10 @@ import (
 	"hellomix-backend/internal/api/handlers"
 	"hellomix-backend/internal/api/middleware"
 
+	"time"
+
 	"github.com/gin-gonic/gin"
 	"github.com/go-redis/redis/v8"
-	"time"
 )
 
 // SetupRoutes configures all routes for the application
@@ -58,6 +59,7 @@ func SetupRoutes(
 		{
 			exchange.POST("/initiate", transactionHandler.InitiateExchange)
 			exchange.GET("/status/:id", transactionHandler.GetTransactionStatus)
+			exchange.GET("/payment/:id", transactionHandler.GetPaymentStatus)
 		}
 
 		// Address endpoints

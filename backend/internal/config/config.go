@@ -13,6 +13,7 @@ type Config struct {
 	Database DatabaseConfig
 	Redis    RedisConfig
 	API      APIConfig
+	Wallet   WalletConfig
 }
 
 type ServerConfig struct {
@@ -41,6 +42,11 @@ type RedisConfig struct {
 type APIConfig struct {
 	CoinGeckoAPIKey string
 	RateLimit       int
+}
+
+type WalletConfig struct {
+	MasterKey string
+	Testnet   bool
 }
 
 func Load() (*Config, error) {
@@ -74,6 +80,10 @@ func Load() (*Config, error) {
 			CoinGeckoAPIKey: getEnv("COINGECKO_API_KEY", ""),
 			RateLimit:       getEnvAsInt("RATE_LIMIT", 100),
 		},
+		Wallet: WalletConfig{
+			MasterKey: getEnv("WALLET_MASTER_KEY", ""),
+			Testnet:   getEnvAsBool("WALLET_TESTNET", false),
+		},
 	}
 
 	return config, nil
@@ -90,6 +100,15 @@ func getEnvAsInt(key string, defaultValue int) int {
 	if value := os.Getenv(key); value != "" {
 		if intValue, err := strconv.Atoi(value); err == nil {
 			return intValue
+		}
+	}
+	return defaultValue
+}
+
+func getEnvAsBool(key string, defaultValue bool) bool {
+	if value := os.Getenv(key); value != "" {
+		if boolValue, err := strconv.ParseBool(value); err == nil {
+			return boolValue
 		}
 	}
 	return defaultValue

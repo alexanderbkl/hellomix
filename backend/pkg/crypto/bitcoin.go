@@ -1,57 +1,42 @@
 package crypto
 
 import (
-	"crypto/rand"
-	"crypto/sha256"
-	"encoding/hex"
-	"fmt"
-	"strings"
+	"github.com/btcsuite/btcd/btcutil"
+	"github.com/btcsuite/btcd/chaincfg"
 )
 
 // BitcoinService handles Bitcoin-related operations
 type BitcoinService struct {
-	testnet bool
+	testnet       bool
+	walletManager *WalletManager
 }
 
 // NewBitcoinService creates a new Bitcoin service
 func NewBitcoinService(testnet bool) *BitcoinService {
 	return &BitcoinService{
-		testnet: testnet,
+		testnet:       testnet,
+		walletManager: NewWalletManager(testnet),
 	}
 }
 
-// GenerateAddress generates a new Bitcoin address
+// GenerateAddress generates a new Bitcoin address with persistent key storage
 func (bs *BitcoinService) GenerateAddress() (string, error) {
-	// Generate a random private key
-	privateKey := make([]byte, 32)
-	_, err := rand.Read(privateKey)
-	if err != nil {
-		return "", fmt.Errorf("failed to generate random bytes: %w", err)
-	}
-
-	// Create a hash of the private key for the address
-	hash := sha256.Sum256(privateKey)
-	
-	// Create a simple Bitcoin-like address (for demo purposes)
-	prefix := "1"
-	if bs.testnet {
-		prefix = "m"
-	}
-	
-	address := prefix + hex.EncodeToString(hash[:16])
-	return address, nil
+	return bs.walletManager.GenerateAddressWithKey()
 }
 
-// ValidateAddress validates a Bitcoin address (basic validation)
+// ValidateAddress validates a Bitcoin address using proper Bitcoin validation
 func (bs *BitcoinService) ValidateAddress(address string) bool {
-	if len(address) < 26 || len(address) > 35 {
-		return false
+	// Choose the appropriate network parameters
+	var netParams *chaincfg.Params
+	if bs.testnet {
+		netParams = &chaincfg.TestNet3Params
+	} else {
+		netParams = &chaincfg.MainNetParams
 	}
-	
-	// Basic Bitcoin address validation
-	return strings.HasPrefix(address, "1") || strings.HasPrefix(address, "3") || 
-		   strings.HasPrefix(address, "bc1") || strings.HasPrefix(address, "tb1") ||
-		   strings.HasPrefix(address, "m") || strings.HasPrefix(address, "2")
+
+	// Use btcutil to validate the address
+	_, err := btcutil.DecodeAddress(address, netParams)
+	return err == nil
 }
 
 // AddressValidator provides validation for various cryptocurrency addresses
@@ -78,16 +63,17 @@ func (av *AddressValidator) ValidateAddress(address, currency string) bool {
 	}
 }
 
-// validateBitcoinAddress validates a Bitcoin address
+// validateBitcoinAddress validates a Bitcoin address using proper Bitcoin validation
 func (av *AddressValidator) validateBitcoinAddress(address string) bool {
-	if len(address) < 26 || len(address) > 35 {
-		return false
+	// Try to decode as mainnet first
+	_, err := btcutil.DecodeAddress(address, &chaincfg.MainNetParams)
+	if err == nil {
+		return true
 	}
-	
-	// Basic Bitcoin address validation
-	return strings.HasPrefix(address, "1") || strings.HasPrefix(address, "3") || 
-		   strings.HasPrefix(address, "bc1") || strings.HasPrefix(address, "tb1") ||
-		   strings.HasPrefix(address, "m") || strings.HasPrefix(address, "2")
+
+	// Try to decode as testnet
+	_, err = btcutil.DecodeAddress(address, &chaincfg.TestNet3Params)
+	return err == nil
 }
 
 // validateEthereumAddress validates an Ethereum-based address

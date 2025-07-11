@@ -19,6 +19,7 @@ type Transaction struct {
 	Status          string          `json:"status" gorm:"type:varchar(20);not null;default:'pending'"`
 	Fee             float64         `json:"fee" gorm:"type:decimal(18,8);default:0"`
 	EstimatedOutput float64         `json:"estimated_output" gorm:"type:decimal(18,8)"`
+	FinalOutput     float64         `json:"final_output" gorm:"type:decimal(18,8)"`
 	CreatedAt       time.Time       `json:"created_at"`
 	UpdatedAt       time.Time       `json:"updated_at"`
 }
@@ -88,6 +89,48 @@ const (
 func (t *Transaction) BeforeCreate(tx *gorm.DB) error {
 	if t.ID == uuid.Nil {
 		t.ID = uuid.New()
+	}
+	return nil
+}
+
+// Payment represents a Bitcoin payment received for a transaction
+type Payment struct {
+	ID            uuid.UUID `json:"id" gorm:"type:uuid;primary_key;default:gen_random_uuid()"`
+	TransactionID uuid.UUID `json:"transaction_id" gorm:"type:uuid;not null;index"`
+	Address       string    `json:"address" gorm:"type:varchar(100);not null"`
+	AmountSats    int64     `json:"amount_sats" gorm:"not null"`
+	AmountBTC     float64   `json:"amount_btc" gorm:"type:decimal(18,8);not null"`
+	TXID          string    `json:"txid" gorm:"type:varchar(100)"`
+	Confirmations int       `json:"confirmations" gorm:"default:0"`
+	Status        string    `json:"status" gorm:"type:varchar(20);not null"`
+	DetectedAt    time.Time `json:"detected_at"`
+	CreatedAt     time.Time `json:"created_at"`
+	UpdatedAt     time.Time `json:"updated_at"`
+}
+
+// BeforeCreate will set a UUID rather than numeric ID.
+func (p *Payment) BeforeCreate(tx *gorm.DB) error {
+	if p.ID == uuid.Nil {
+		p.ID = uuid.New()
+	}
+	return nil
+}
+
+// Wallet represents a Bitcoin wallet with encrypted private key
+type Wallet struct {
+	ID               uuid.UUID  `json:"id" gorm:"type:uuid;primary_key;default:gen_random_uuid()"`
+	Address          string     `json:"address" gorm:"type:varchar(100);not null;unique"`
+	EncryptedPrivKey string     `json:"-" gorm:"type:text;not null"` // Never expose in JSON
+	TransactionID    *uuid.UUID `json:"transaction_id" gorm:"type:uuid;index"`
+	IsActive         bool       `json:"is_active" gorm:"default:true"`
+	CreatedAt        time.Time  `json:"created_at"`
+	UpdatedAt        time.Time  `json:"updated_at"`
+}
+
+// BeforeCreate will set a UUID rather than numeric ID.
+func (w *Wallet) BeforeCreate(tx *gorm.DB) error {
+	if w.ID == uuid.Nil {
+		w.ID = uuid.New()
 	}
 	return nil
 }

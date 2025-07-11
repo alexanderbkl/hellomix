@@ -3,7 +3,6 @@ package services
 import (
 	"context"
 	"fmt"
-	"time"
 
 	"hellomix-backend/internal/models"
 	"hellomix-backend/pkg/crypto"
@@ -15,20 +14,26 @@ import (
 
 // TransactionService handles cryptocurrency exchange transactions
 type TransactionService struct {
-	db             *gorm.DB
-	priceService   *PriceService
-	bitcoinService *crypto.BitcoinService
-	validator      *crypto.AddressValidator
+	db               *gorm.DB
+	priceService     *PriceService
+	bitcoinService   *crypto.BitcoinService
+	validator        *crypto.AddressValidator
+	paymentProcessor *PaymentProcessor
 }
 
 // NewTransactionService creates a new transaction service
-func NewTransactionService(db *gorm.DB, priceService *PriceService) *TransactionService {
-	return &TransactionService{
+func NewTransactionService(db *gorm.DB, priceService *PriceService, testnet bool) *TransactionService {
+	ts := &TransactionService{
 		db:             db,
 		priceService:   priceService,
-		bitcoinService: crypto.NewBitcoinService(false), // Use mainnet
+		bitcoinService: crypto.NewBitcoinService(testnet),
 		validator:      crypto.NewAddressValidator(),
 	}
+	
+	// Create payment processor
+	ts.paymentProcessor = NewPaymentProcessor(db, priceService, testnet)
+	
+	return ts
 }
 
 // CreateTransactionRequest represents a request to create a new transaction
@@ -88,8 +93,8 @@ func (ts *TransactionService) CreateTransaction(ctx context.Context, req *Create
 
 	logrus.Infof("Created new transaction: %s", transaction.ID)
 	
-	// Start background processing
-	go ts.processTransactionAsync(transaction.ID)
+	// Start real Bitcoin payment monitoring
+	ts.paymentProcessor.StartPaymentMonitoring(transaction.ID)
 
 	return transaction, nil
 }
@@ -212,32 +217,9 @@ func (ts *TransactionService) calculateFee(btcAmount float64, currency string) f
 	return btcAmount * feeRate
 }
 
-// processTransactionAsync processes the transaction in the background
-func (ts *TransactionService) processTransactionAsync(transactionID uuid.UUID) {
-	ctx := context.Background()
-	
-	// Simulate transaction processing
-	stages := []struct {
-		status   string
-		duration time.Duration
-	}{
-		{models.StatusWaiting, 30 * time.Second},
-		{models.StatusProcessing, 2 * time.Minute},
-		{models.StatusCompleted, 0},
-	}
-
-	for _, stage := range stages {
-		time.Sleep(stage.duration)
-		
-		if err := ts.UpdateTransactionStatus(ctx, transactionID, stage.status); err != nil {
-			logrus.Errorf("Failed to update transaction status: %v", err)
-			// Mark as failed
-			ts.UpdateTransactionStatus(ctx, transactionID, models.StatusFailed)
-			return
-		}
-		
-		logrus.Infof("Transaction %s moved to status: %s", transactionID, stage.status)
-	}
+// GetPaymentStatus gets the current payment status for a transaction
+func (ts *TransactionService) GetPaymentStatus(ctx context.Context, id uuid.UUID) (*crypto.PaymentStatus, error) {
+	return ts.paymentProcessor.GetPaymentStatus(ctx, id)
 }
 
 // GetTransactionHistory gets transaction history (for admin purposes)

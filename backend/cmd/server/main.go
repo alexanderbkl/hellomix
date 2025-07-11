@@ -61,7 +61,10 @@ func main() {
 
 	// Initialize services
 	priceService := services.NewPriceService(db.DB, redisClient, cfg.API.CoinGeckoAPIKey)
-	transactionService := services.NewTransactionService(db.DB, priceService)
+	
+	// Use testnet from configuration
+	testnet := cfg.Wallet.Testnet
+	transactionService := services.NewTransactionService(db.DB, priceService, testnet)
 
 	// Initialize handlers
 	transactionHandler := handlers.NewTransactionHandler(transactionService)
@@ -130,16 +133,17 @@ func main() {
 }
 
 func configureLogger(mode string) {
-	// Set log level based on mode
-	if mode == "release" {
-		logrus.SetLevel(logrus.InfoLevel)
-		logrus.SetFormatter(&logrus.JSONFormatter{})
-	} else {
+	// Configure logger based on environment
+	if mode == "debug" || mode == "development" {
 		logrus.SetLevel(logrus.DebugLevel)
 		logrus.SetFormatter(&logrus.TextFormatter{
 			FullTimestamp: true,
 			ForceColors:   true,
 		})
+		logrus.Debug("Debug logging enabled")
+	} else {
+		logrus.SetLevel(logrus.InfoLevel)
+		logrus.SetFormatter(&logrus.JSONFormatter{})
 	}
 
 	logrus.SetOutput(os.Stdout)
