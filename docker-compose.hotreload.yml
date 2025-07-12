@@ -1,0 +1,85 @@
+version: '3.8'
+
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: docker/Dockerfile
+      target: development  # Use development stage
+    container_name: hellomix-backend-hotreload
+    ports:
+      - "8080:8080"
+    environment:
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_NAME=hellomix
+      - DB_USER=hellomix
+      - DB_PASSWORD=hellomix_password
+      - DB_SSLMODE=disable
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - REDIS_PASSWORD=
+      - REDIS_DB=0
+      - SERVER_MODE=debug
+      - SERVER_PORT=8080
+      - COINGECKO_API_KEY=${COINGECKO_API_KEY:-}
+    volumes:
+      - ./backend:/app  # Mount source code for live reload
+    depends_on:
+      - postgres
+      - redis
+    networks:
+      - hellomix-network
+    command: ["air", "-c", ".air.toml"]  # Use air for hot reload
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: hellomix-frontend-hotreload
+    ports:
+      - "3000:3000"
+    environment:
+      - NEXT_PUBLIC_API_URL=http://localhost:8080
+      - NODE_ENV=development
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+      - /app/.next
+    depends_on:
+      - backend
+    networks:
+      - hellomix-network
+
+  postgres:
+    image: postgres:15
+    container_name: hellomix-postgres
+    environment:
+      - POSTGRES_DB=hellomix
+      - POSTGRES_USER=hellomix
+      - POSTGRES_PASSWORD=hellomix_password
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - hellomix-network
+
+  redis:
+    image: redis:7-alpine
+    container_name: hellomix-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - hellomix-network
+
+networks:
+  hellomix-network:
+    driver: bridge
+
+volumes:
+  postgres_data:
+  redis_data:
+  backend_go_cache:

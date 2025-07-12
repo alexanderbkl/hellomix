@@ -1,0 +1,86 @@
+version: '3.8'
+
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: docker/Dockerfile
+      target: development  # Use development stage
+    container_name: hellomix-backend-debug
+    ports:
+      - "8080:8080"
+      - "2345:2345"  # Delve debugger port
+    environment:
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_NAME=hellomix
+      - DB_USER=hellomix
+      - DB_PASSWORD=hellomix_password
+      - DB_SSLMODE=disable
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - REDIS_PASSWORD=
+      - REDIS_DB=0
+      - SERVER_MODE=debug
+      - SERVER_PORT=8080
+      - COINGECKO_API_KEY=${COINGECKO_API_KEY:-}
+    volumes:
+      - ./backend:/app  # Mount source code for live reload
+    depends_on:
+      - postgres
+      - redis
+    networks:
+      - hellomix-network
+    command: ["dlv", "debug", "./cmd/server", "--headless", "--listen=:2345", "--api-version=2", "--accept-multiclient", "--continue"]
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: hellomix-frontend-debug
+    ports:
+      - "3000:3000"
+    environment:
+      - NEXT_PUBLIC_API_URL=http://localhost:8080
+      - NODE_ENV=development
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+      - /app/.next
+    depends_on:
+      - backend
+    networks:
+      - hellomix-network
+    command: ["npm", "run", "dev"]
+
+  postgres:
+    image: postgres:15-alpine
+    container_name: hellomix-postgres-debug
+    environment:
+      POSTGRES_DB: hellomix
+      POSTGRES_USER: hellomix
+      POSTGRES_PASSWORD: hellomix_password
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data_debug:/var/lib/postgresql/data
+    networks:
+      - hellomix-network
+
+  redis:
+    image: redis:7-alpine
+    container_name: hellomix-redis-debug
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data_debug:/data
+    networks:
+      - hellomix-network
+
+volumes:
+  postgres_data_debug:
+  redis_data_debug:
+
+networks:
+  hellomix-network:
+    driver: bridge
